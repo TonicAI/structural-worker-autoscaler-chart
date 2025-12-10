@@ -1,0 +1,166 @@
+{{- if .Values.installation.crds.installWorkerPool }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: structuralworkerpools.structural.tonic.ai
+spec:
+  group: structural.tonic.ai
+  names:
+    kind: StructuralWorkerPool
+    listKind: StructuralWorkerPoolList
+    plural: structuralworkerpools
+    singular: structuralworkerpool
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - format: int32
+      jsonPath: .status.runningWorkers
+      name: runningWorkers
+      priority: 0
+      type: integer
+    - format: int32
+      jsonPath: .status.pendingWorkers
+      name: pendingWorkers
+      priority: 0
+      type: integer
+    - format: int32
+      jsonPath: .status.failedWorkers
+      name: failedWorkers
+      priority: 0
+      type: integer
+    - format: int32
+      jsonPath: .status.currentCapacity
+      name: currentCapacity
+      priority: 0
+      type: integer
+    - format: int32
+      jsonPath: .status.queueSize
+      name: queueSize
+      priority: 0
+      type: integer
+    - jsonPath: .status.queueEndpoint
+      name: queueEndpoint
+      priority: 0
+      type: string
+    - jsonPath: .spec.workerPoolClassName
+      name: workerPoolClassName
+      priority: 0
+      type: string
+    - jsonPath: .spec.status
+      name: status
+      priority: 0
+      type: string
+    - format: int32
+      jsonPath: .spec.poolCapacity
+      name: poolCapacity
+      priority: 0
+      type: integer
+    - jsonPath: .spec.queue.interval
+      name: interval
+      priority: 1
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            nullable: false
+            properties:
+              runningWorkers:
+                format: int32
+                nullable: false
+                type: integer
+              pendingWorkers:
+                format: int32
+                nullable: false
+                type: integer
+              failedWorkers:
+                format: int32
+                nullable: false
+                type: integer
+              currentCapacity:
+                format: int32
+                nullable: false
+                type: integer
+              queueSize:
+                format: int32
+                nullable: false
+                type: integer
+              queueEndpoint:
+                nullable: false
+                type: string
+              managedBy:
+                nullable: false
+                type: string
+            type: object
+          spec:
+            nullable: false
+            properties:
+              workerPoolClassName:
+                nullable: true
+                type: string
+              status:
+                enum:
+                - Active
+                - Paused
+                - Shutdown
+                nullable: false
+                type: string
+              poolCapacity:
+                format: int32
+                nullable: false
+                type: integer
+              queue:
+                nullable: false
+                properties:
+                  interval:
+                    nullable: false
+                    type: string
+                  source:
+                    nullable: false
+                    properties:
+                      endpoint:
+                        nullable: false
+                        type: string
+                      secretName:
+                        nullable: false
+                        type: string
+                    type: object
+                type: object
+              workerSpec:
+                nullable: false
+                properties:
+                  idleTimeoutMinutes:
+                    format: int32
+                    nullable: false
+                    type: integer
+                  podTemplate:
+                    nullable: false
+                    properties:
+                      containerName:
+                        nullable: false
+                        type: string
+                      source:
+                        nullable: false
+                        properties:
+                          name:
+                            nullable: false
+                            type: string
+                          kind:
+                            enum:
+                            - Deployment
+                            nullable: false
+                            type: string
+                        type: object
+                    type: object
+                  retainFailedWorkers:
+                    nullable: false
+                    type: boolean
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+{{- end }}

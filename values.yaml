@@ -1,0 +1,60 @@
+nameOverride: "structural-worker-autoscaler"
+fullnameOverride: ""
+installation:
+  imagePullSecrets: []
+  crds:
+      installWorkerPool: true
+operator:
+  configuration:
+    identity: null
+    className: null
+    defaultClass: true
+    scope: namespace
+  serviceAccount:
+    create: true
+    annotations: {}
+    labels: {}
+    name: ""
+  rbac:
+    create: true
+    name: ""
+  pod:
+    affinity: {}
+    annotations: {}
+    labels: {}
+    nodeSelector: {}
+    securityContext: {}
+    tolerations: []
+    volumes: []
+  container:
+    env: []
+    envFrom: []
+    image:
+      repository: quay.io/tonicai/structural-worker-autoscaler
+      pullPolicy: Always
+      tag: ""
+    resources:
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        ephemeral-storage: 128Mi
+        memory: 64Mi
+    securityContext: {}
+    volumeMounts: []
+  metrics:
+    port: "9464"
+logShipping:
+  image:
+    repository:
+      pullPolicy:
+      tag: "latest"
+  env: []
+monitoring:
+  podMonitor:
+    create: false
+  grafanaDashboard:
+    create: false
+    labels: {}
+    filename: null

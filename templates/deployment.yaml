@@ -1,0 +1,144 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "structural-worker-autoscaler.fullname-with" (list $ "operator") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "structural-worker-autoscaler.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "structural-worker-autoscaler.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.operator.pod.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "structural-worker-autoscaler.labels" . | nindent 8 }}
+        {{- with .Values.operator.pod.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 10
+      {{- with .Values.installation.imagePullSecrets }}
+      imagePullSecrets:
+        {{- include "structural-worker-autoscaler.imagePullSecrets.list" . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "structural-worker-autoscaler.serviceAccountName" . }}
+      {{- with .Values.operator.pod.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: operator
+          args:
+            - "--name"
+            - "{{ required "operator.configuration.identity is required" .Values.operator.configuration.identity }}"
+            {{- if .Values.operator.configuration.className }}
+            - "--class-name"
+            - "{{ .Values.operator.configuration.className }}"
+            {{- end }}
+            {{- if .Values.operator.configuration.defaultClass }}
+            - "--default-class"
+            {{- end }}
+            {{- if eq .Values.operator.configuration.scope "namespace" }}
+            - "--namespaced"
+            - "{{ .Release.Namespace }}"
+            {{- end }}
+            {{- if (.Values.operator.metrics).port }}
+            - "--metrics-port"
+            - "{{ .Values.operator.metrics.port }}"
+            {{- end }}
+          ports:
+            {{- if (.Values.operator.metrics).port }}
+            - containerPort: {{ .Values.operator.metrics.port }}
+              name: metrics
+            {{- end }}
+          image: "{{ .Values.operator.container.image.repository }}:{{ .Values.operator.container.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.operator.container.image.pullPolicy }}
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          {{- with .Values.operator.container.env }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.operator.container.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+          {{- with .Values.operator.container.resources }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.operator.container.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - mountPath: /var/log/tonic
+              name: scratch
+              subPath: worker-scaler-logs
+          {{- with .Values.operator.container.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        - name: vector
+          image: quay.io/tonicai/log_collector:latest
+          imagePullPolicy: Always
+          env:
+          - name: VECTOR_SELF_NODE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+          - name: VECTOR_SELF_POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: VECTOR_SELF_POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: LOG_COLLECTION_FOLDER
+            value: /var/log/tonic/
+          resources:
+            limits:
+              cpu: 250m
+              ephemeral-storage: 256Mi
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              ephemeral-storage: 128Mi
+              memory: 64Mi
+          volumeMounts:
+          - mountPath: /var/log/tonic
+            name: scratch
+            subPath: worker-scaler-logs
+          - mountPath: /var/run/tonic
+            name: scratch
+            subPath: vector-workdir
+      volumes:
+        - emptyDir: {}
+          name: scratch
+      {{- with .Values.operator.pod.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.pod.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.pod.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.pod.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
