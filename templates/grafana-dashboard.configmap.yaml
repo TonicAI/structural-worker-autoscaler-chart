@@ -1,0 +1,21 @@
+{{- if ((.Values.monitoring).grafanaDashboard).create }}
+{{- $dashboard := .Values.monitoring.grafanaDashboard }}
+{{- $content := .Files.Get "files/dashboard.json" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "structural-worker-autoscaler.fullname-with" (list $ "dashboard") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- if $dashboard.labels }}
+    {{- toYaml $dashboard.labels | nindent 4 }}
+    {{- end }}
+    {{- include "structural-worker-autoscaler.labels" . | nindent 4 }}
+data:
+{{- if $dashboard.filename }}
+    "{{ $dashboard.filename }}": |-
+{{- else }}
+    "{{ .Release.Namespace }}-{{ $content | sha256sum }}.json": |-
+{{- end }}
+{{- $content | nindent 6 }}
+{{- end }}
