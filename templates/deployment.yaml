@@ -87,6 +87,23 @@ spec:
           {{- with .Values.operator.container.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if (.Values.operator.metrics).port }}
+          startupProbe:
+            httpGet:
+              path: "/metrics"
+              port: "metrics"
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: "/metrics"
+              port: "metrics"
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 5
+          {{- end }}
         - name: vector
           image: quay.io/tonicai/log_collector:latest
           imagePullPolicy: Always
