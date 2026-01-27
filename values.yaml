@@ -43,8 +43,6 @@ operator:
         memory: 64Mi
     securityContext: {}
     volumeMounts: []
-  metrics:
-    port: "9464"
 logShipping:
   image:
     repository:

@@ -5,6 +5,7 @@ metadata:
   name: {{ include "structural-worker-autoscaler.fullname-with" (list $ "monitor") }}
   namespace: {{ .Release.Namespace }}
   labels:
+    tonic.ai/metrics: structural-worker-autoscaler
     {{- include "structural-worker-autoscaler.labels" . | nindent 4 }}
 spec:
   podMetricsEndpoints:
@@ -12,5 +13,5 @@ spec:
       path: '/metrics'
   selector:
     matchLabels:
-      {{- include "structural-worker-autoscaler.selectorLabels" . | nindent 6 }}
+      tonic.ai/metrics: structural-worker-autoscaler
 {{- end }}

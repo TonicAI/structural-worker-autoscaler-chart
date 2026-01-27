@@ -17,6 +17,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
+        tonic.ai/metrics: structural-worker-autoscaler
         {{- include "structural-worker-autoscaler.labels" . | nindent 8 }}
         {{- with .Values.operator.pod.labels }}
         {{- toYaml . | nindent 8 }}
@@ -49,15 +50,9 @@ spec:
             - "--namespaced"
             - "{{ .Release.Namespace }}"
             {{- end }}
-            {{- if (.Values.operator.metrics).port }}
-            - "--metrics-port"
-            - "{{ .Values.operator.metrics.port }}"
-            {{- end }}
           ports:
-            {{- if (.Values.operator.metrics).port }}
-            - containerPort: {{ .Values.operator.metrics.port }}
+            - containerPort: 9464
               name: metrics
-            {{- end }}
           image: "{{ .Values.operator.container.image.repository }}:{{ .Values.operator.container.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.operator.container.image.pullPolicy }}
           env:
@@ -87,7 +82,6 @@ spec:
           {{- with .Values.operator.container.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if (.Values.operator.metrics).port }}
           startupProbe:
             httpGet:
               path: "/metrics"
@@ -103,7 +97,6 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 1
             failureThreshold: 5
-          {{- end }}
         - name: vector
           image: quay.io/tonicai/log_collector:latest
           imagePullPolicy: Always
