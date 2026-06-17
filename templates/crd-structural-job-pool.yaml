@@ -40,7 +40,11 @@ spec:
       type: integer
     - jsonPath: .status.queueEndpoint
       name: queueEndpoint
-      priority: 0
+      priority: 1
+      type: string
+    - jsonPath: .status.zoneId
+      name: zoneId
+      priority: 1
       type: string
     - jsonPath: .spec.workerPoolClassName
       name: workerPoolClassName
@@ -63,100 +67,82 @@ spec:
     schema:
       openAPIV3Schema:
         properties:
-          status:
-            nullable: false
-            properties:
-              runningWorkers:
-                format: int32
-                nullable: false
-                type: integer
-              pendingWorkers:
-                format: int32
-                nullable: false
-                type: integer
-              failedWorkers:
-                format: int32
-                nullable: false
-                type: integer
-              currentCapacity:
-                format: int32
-                nullable: false
-                type: integer
-              queueSize:
-                format: int32
-                nullable: false
-                type: integer
-              queueEndpoint:
-                nullable: false
-                type: string
-              managedBy:
-                nullable: false
-                type: string
-            type: object
           spec:
-            nullable: false
             properties:
-              workerPoolClassName:
-                nullable: true
-                type: string
+              poolCapacity:
+                format: int32
+                type: integer
+              queue:
+                properties:
+                  interval:
+                    type: string
+                  source:
+                    properties:
+                      endpoint:
+                        type: string
+                      secretName:
+                        type: string
+                    type: object
+                  zoneId:
+                    nullable: true
+                    type: string
+                type: object
               status:
                 enum:
                 - Active
                 - Paused
                 - Shutdown
-                nullable: false
                 type: string
-              poolCapacity:
-                format: int32
-                nullable: false
-                type: integer
-              queue:
-                nullable: false
-                properties:
-                  interval:
-                    nullable: false
-                    type: string
-                  source:
-                    nullable: false
-                    properties:
-                      endpoint:
-                        nullable: false
-                        type: string
-                      secretName:
-                        nullable: false
-                        type: string
-                    type: object
-                type: object
+              workerPoolClassName:
+                nullable: true
+                type: string
               workerSpec:
-                nullable: false
                 properties:
                   idleTimeoutMinutes:
                     format: int32
-                    nullable: false
                     type: integer
                   podTemplate:
-                    nullable: false
                     properties:
                       containerName:
-                        nullable: false
                         type: string
                       source:
-                        nullable: false
                         properties:
-                          name:
-                            nullable: false
-                            type: string
                           kind:
                             enum:
                             - Deployment
-                            nullable: false
+                            type: string
+                          name:
                             type: string
                         type: object
                     type: object
                   retainFailedWorkers:
-                    nullable: false
                     type: boolean
                 type: object
+            type: object
+          status:
+            properties:
+              currentCapacity:
+                format: int32
+                type: integer
+              failedWorkers:
+                format: int32
+                type: integer
+              managedBy:
+                type: string
+              pendingWorkers:
+                format: int32
+                type: integer
+              queueEndpoint:
+                type: string
+              queueSize:
+                format: int32
+                type: integer
+              runningWorkers:
+                format: int32
+                type: integer
+              zoneId:
+                nullable: true
+                type: string
             type: object
         type: object
     served: true
